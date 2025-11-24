@@ -13,6 +13,7 @@ use Yii;
  * @property string $last_name
  * @property string|null $created_at
  * @property string|null $updated_at
+ * @property BookAuthor[] $bookAuthors
  */
 class Author extends \yii\db\ActiveRecord
 {
@@ -52,6 +53,16 @@ class Author extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
+    }
+
+    /**
+     * Gets query for [[BookAuthors]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getBookAuthors()
+    {
+        return $this->hasMany(BookAuthor::class, ['author_id' => 'id']);
     }
 
 }
