@@ -17,9 +17,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
+    <?php if (Yii::$app->user->can('createBook')): ?>
     <p>
         <?= Html::a('Create Book', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
+    <?php endif; ?>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
@@ -41,7 +43,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Book $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id]);
-                 }
+                 },
+                'visibleButtons' => [
+                    'update' => function ($model, $key, $index) {
+                        return Yii::$app->user->can('updateBook');
+                    },
+                    'delete' => function ($model, $key, $index) {
+                        return Yii::$app->user->can('deleteBook');
+                    },
+                ],
             ],
             [
                 'label' => 'Authors',

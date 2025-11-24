@@ -6,8 +6,25 @@ use app\models\Subscribe;
 use Yii;
 use yii\web\Controller;
 use yii\web\Response;
+use yii\filters\AccessControl;
+
 class SubscribeController extends Controller
 {
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'actions' => ['ajax-subscribe'],
+                        'roles' => ['@', '?'],
+                    ],
+                ],
+            ],
+        ];
+    }
     public function actionAjaxSubscribe()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

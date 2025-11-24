@@ -4,9 +4,11 @@ namespace app\controllers;
 
 use app\models\Author;
 use app\models\AuthorSearch;
+use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
 
 /**
  * AuthorController implements the CRUD actions for Author model.
@@ -21,6 +23,35 @@ class AuthorController extends Controller
         return array_merge(
             parent::behaviors(),
             [
+                'access' => [
+                    'class' => AccessControl::class,
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'actions' => ['index', 'view'],
+                            'roles' => ['@', '?'],
+                        ],
+                        [
+                            'allow' => true,
+                            'actions' => ['create', 'update', 'delete'],
+                            'matchCallback' => function ($rule, $action) {
+                                $permission = '';
+                                switch ($action->id) {
+                                    case 'create':
+                                        $permission = 'createAuthor';
+                                        break;
+                                    case 'update':
+                                        $permission = 'updateAuthor';
+                                        break;
+                                    case 'delete':
+                                        $permission = 'deleteAuthor';
+                                        break;
+                                }
+                                return !Yii::$app->user->isGuest && Yii::$app->user->can($permission);
+                            },
+                        ],
+                    ],
+                ],
                 'verbs' => [
                     'class' => VerbFilter::className(),
                     'actions' => [
