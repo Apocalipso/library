@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\web\UploadedFile;
 
 /**
  * This is the model class for table "book".
@@ -17,9 +18,14 @@ use Yii;
  * @property string|null $updated_at
  *
  * @property BookAuthor[] $bookAuthors
+ * @property UploadedFile|null $imageFile
  */
 class Book extends \yii\db\ActiveRecord
 {
+    /**
+     * @var UploadedFile
+     */
+    public $imageFile;
 
 
     /**
@@ -44,6 +50,7 @@ class Book extends \yii\db\ActiveRecord
             [['title', 'cover_image'], 'string', 'max' => 255],
             [['isbn'], 'string', 'max' => 20],
             [['isbn'], 'unique'],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg, gif', 'maxSize' => 5 * 1024 * 1024],
         ];
     }
 
@@ -59,6 +66,7 @@ class Book extends \yii\db\ActiveRecord
             'description' => 'Description',
             'isbn' => 'Isbn',
             'cover_image' => 'Cover Image',
+            'imageFile' => 'Cover Image',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
@@ -72,6 +80,87 @@ class Book extends \yii\db\ActiveRecord
     public function getBookAuthors()
     {
         return $this->hasMany(BookAuthor::class, ['book_id' => 'id']);
+    }
+
+    /**
+     * Получить путь к папке для загрузки изображений
+     * @return string
+     */
+    public function getUploadPath()
+    {
+        $uploadDir = Yii::getAlias('@webroot') . '/upload/' . $this->id;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        return $uploadDir;
+    }
+
+    /**
+     * Получить URL изображения обложки
+     * @return string|null
+     */
+    public function getCoverImageUrl()
+    {
+        if ($this->cover_image) {
+            return Yii::getAlias('@web') . '/upload/' . $this->id . '/' . $this->cover_image;
+        }
+        return null;
+    }
+
+    /**
+     * Загрузить изображение
+     * @return bool
+     */
+    public function upload()
+    {
+        if ($this->imageFile) {
+            $uploadPath = $this->getUploadPath();
+            $fileName = uniqid() . '.' . $this->imageFile->extension;
+            $filePath = $uploadPath . '/' . $fileName;
+            
+            if ($this->imageFile->saveAs($filePath)) {
+                if ($this->cover_image && file_exists($uploadPath . '/' . $this->cover_image)) {
+                    unlink($uploadPath . '/' . $this->cover_image);
+                }
+                
+                $this->cover_image = $fileName;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($insert) {
+                $this->created_at = date('Y-m-d H:i:s');
+            }
+            $this->updated_at = date('Y-m-d H:i:s');
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function afterDelete()
+    {
+        parent::afterDelete();
+        $uploadDir = Yii::getAlias('@webroot') . '/upload/' . $this->id;
+        if (is_dir($uploadDir)) {
+            $files = glob($uploadDir . '/*');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+            rmdir($uploadDir);
+        }
     }
 
 }

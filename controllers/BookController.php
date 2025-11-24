@@ -70,8 +70,14 @@ class BookController extends Controller
         $model = new Book();
 
         if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            if ($model->load($this->request->post())) {
+                $model->imageFile = \yii\web\UploadedFile::getInstance($model, 'imageFile');
+                if ($model->save()) {
+                    if ($model->imageFile && $model->upload()) {
+                        $model->save(false); // Сохранить имя файла в БД
+                    }
+                    return $this->redirect(['view', 'id' => $model->id]);
+                }
             }
         } else {
             $model->loadDefaultValues();
@@ -93,8 +99,16 @@ class BookController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post())) {
+                $model->imageFile = \yii\web\UploadedFile::getInstance($model, 'imageFile');
+                if ($model->save()) {
+                    if ($model->imageFile && $model->upload()) {
+                        $model->save(false);
+                    }
+                    return $this->redirect(['view', 'id' => $model->id]);
+                }
+            }
         }
 
         return $this->render('update', [

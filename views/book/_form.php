@@ -10,7 +10,7 @@ use yii\widgets\ActiveForm;
 
 <div class="book-form">
 
-    <?php $form = ActiveForm::begin(); ?>
+    <?php $form = ActiveForm::begin(['options' => ['enctype' => 'multipart/form-data']]); ?>
 
     <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
 
@@ -20,7 +20,14 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'isbn')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'cover_image')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'imageFile')->fileInput(['accept' => 'image/*']) ?>
+    
+    <?php if ($model->cover_image): ?>
+        <div class="form-group">
+            <label>Текущее изображение:</label><br>
+            <?= Html::img($model->getCoverImageUrl(), ['alt' => 'Cover', 'style' => 'max-width: 200px; max-height: 200px;']) ?>
+        </div>
+    <?php endif; ?>
 
     <div class="form-group">
         <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
