@@ -65,4 +65,22 @@ class Author extends \yii\db\ActiveRecord
         return $this->hasMany(BookAuthor::class, ['author_id' => 'id']);
     }
 
+
+    public static function getTopAuthorsByYear($year)
+    {
+        return self::find()
+            ->select([
+                'author.*',
+                'COUNT(DISTINCT book_author.book_id) as books_count'
+            ])
+            ->innerJoin('book_author', 'author.id = book_author.author_id')
+            ->innerJoin('book', 'book_author.book_id = book.id')
+            ->where(['book.year' => $year])
+            ->groupBy(['author.id', 'author.surname', 'author.name', 'author.last_name'])
+            ->orderBy(['books_count' => SORT_DESC])
+            ->limit(10)
+            ->asArray()
+            ->all();
+    }
+
 }
