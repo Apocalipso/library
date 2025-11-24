@@ -222,4 +222,29 @@ class Book extends \yii\db\ActiveRecord
         }
     }
 
+    public function notifySubscribers()
+    {
+        if (empty($this->authors)) {
+            return;
+        }
+
+        $authorIds = \yii\helpers\ArrayHelper::getColumn($this->authors, 'id');
+
+        $subscribers = Subscribe::find()
+            ->where(['author_id' => $authorIds])
+            ->all();
+
+        if (empty($subscribers)) {
+            return;
+        }
+
+        foreach ($subscribers as $subscriber) {
+            try {
+                Yii::$app->smsService->send($subscriber->phone, $subscriber->author->getFullName(), $this->title);
+            } catch (\Exception $e) {
+                Yii::error("Failed to send SMS to {$subscriber->phone}: " . $e->getMessage());
+            }
+        }
+    }
+
 }

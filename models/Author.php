@@ -17,8 +17,6 @@ use Yii;
  */
 class Author extends \yii\db\ActiveRecord
 {
-
-
     /**
      * {@inheritdoc}
      */
@@ -83,4 +81,8 @@ class Author extends \yii\db\ActiveRecord
             ->all();
     }
 
+    public function getFullName()
+    {
+        return $this->last_name . ' ' . $this->name . ' ' . $this->surname;
+    }
 }

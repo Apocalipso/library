@@ -41,6 +41,11 @@ $config = [
                 ],
             ],
         ],
+        'smsService' => [
+            'class' => 'app\services\SmsService',
+            'apiKey' => $params['smspilot']['apiKey'] ?? 'XXXXXXXXXXXXKEYXXXXXXXXXXXX',
+            'from' => $params['smspilot']['from'] ?? 'INFORM',
+        ],
         'db' => $db,
         'urlManager' => [
             'enablePrettyUrl' => true,

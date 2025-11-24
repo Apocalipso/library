@@ -77,6 +77,8 @@ class BookController extends Controller
                         $model->save(false);
                     }
                     $model->saveAuthors();
+
+                    $model->notifySubscribers();
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
             }
