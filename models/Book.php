@@ -27,6 +27,11 @@ class Book extends \yii\db\ActiveRecord
      */
     public $imageFile;
 
+    /**
+     * @var array
+     */
+    public $authorIds = [];
+
 
     /**
      * {@inheritdoc}
@@ -51,6 +56,7 @@ class Book extends \yii\db\ActiveRecord
             [['isbn'], 'string', 'max' => 20],
             [['isbn'], 'unique'],
             [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg, gif', 'maxSize' => 5 * 1024 * 1024],
+            [['authorIds'], 'safe'],
         ];
     }
 
@@ -67,6 +73,7 @@ class Book extends \yii\db\ActiveRecord
             'isbn' => 'Isbn',
             'cover_image' => 'Cover Image',
             'imageFile' => 'Cover Image',
+            'authorIds' => 'Authors',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
@@ -83,7 +90,48 @@ class Book extends \yii\db\ActiveRecord
     }
 
     /**
-     * Получить путь к папке для загрузки изображений
+     * Gets query for [[Authors]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getAuthors()
+    {
+        return $this->hasMany(Author::class, ['id' => 'author_id'])
+            ->viaTable('book_author', ['book_id' => 'id']);
+    }
+
+    /**
+     * Load selected authors into authorIds
+     */
+    public function loadAuthorIds()
+    {
+        if (!$this->isNewRecord) {
+            $this->authorIds = \yii\helpers\ArrayHelper::getColumn(
+                $this->authors,
+                'id'
+            );
+        }
+    }
+
+    /**
+     * Save author relations
+     */
+    public function saveAuthors()
+    {
+        BookAuthor::deleteAll(['book_id' => $this->id]);
+
+        if (!empty($this->authorIds) && is_array($this->authorIds)) {
+            foreach ($this->authorIds as $authorId) {
+                $bookAuthor = new BookAuthor();
+                $bookAuthor->book_id = $this->id;
+                $bookAuthor->author_id = $authorId;
+                $bookAuthor->save();
+            }
+        }
+    }
+
+    /**
+     * Get upload path for images
      * @return string
      */
     public function getUploadPath()
@@ -148,9 +196,20 @@ class Book extends \yii\db\ActiveRecord
     /**
      * {@inheritdoc}
      */
+    public function afterFind()
+    {
+        parent::afterFind();
+        $this->loadAuthorIds();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function afterDelete()
     {
         parent::afterDelete();
+        BookAuthor::deleteAll(['book_id' => $this->id]);
+        
         $uploadDir = Yii::getAlias('@webroot') . '/upload/' . $this->id;
         if (is_dir($uploadDir)) {
             $files = glob($uploadDir . '/*');

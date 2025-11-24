@@ -2,6 +2,9 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use kartik\select2\Select2;
+use app\models\Author;
+use yii\helpers\ArrayHelper;
 
 /** @var yii\web\View $this */
 /** @var app\models\Book $model */
@@ -19,6 +22,20 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
 
     <?= $form->field($model, 'isbn')->textInput(['maxlength' => true]) ?>
+
+    <?= $form->field($model, 'authorIds')->widget(Select2::class, [
+        'data' => ArrayHelper::map(Author::find()->all(), 'id', function($author) {
+            return $author->surname . ' ' . ($author->name ? $author->name . ' ' : '') . $author->last_name;
+        }),
+        'options' => [
+            'placeholder' => 'Select authors...',
+            'multiple' => true,
+        ],
+        'pluginOptions' => [
+            'allowClear' => true,
+            'tags' => false,
+        ],
+    ])->label('Authors') ?>
 
     <?= $form->field($model, 'imageFile')->fileInput(['accept' => 'image/*']) ?>
     

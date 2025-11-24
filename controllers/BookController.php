@@ -74,8 +74,9 @@ class BookController extends Controller
                 $model->imageFile = \yii\web\UploadedFile::getInstance($model, 'imageFile');
                 if ($model->save()) {
                     if ($model->imageFile && $model->upload()) {
-                        $model->save(false); // Сохранить имя файла в БД
+                        $model->save(false);
                     }
+                    $model->saveAuthors();
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
             }
@@ -106,6 +107,7 @@ class BookController extends Controller
                     if ($model->imageFile && $model->upload()) {
                         $model->save(false);
                     }
+                    $model->saveAuthors();
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
             }
