@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\web\UploadedFile;
 
 /**
@@ -32,6 +33,11 @@ class Book extends \yii\db\ActiveRecord
      */
     public $authorIds = [];
 
+    /**
+     * @var array
+     */
+    private $_currentAuthorIds = [];
+
 
     /**
      * {@inheritdoc}
@@ -56,7 +62,7 @@ class Book extends \yii\db\ActiveRecord
             [['isbn'], 'string', 'max' => 20],
             [['isbn'], 'unique'],
             [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg, gif', 'maxSize' => 5 * 1024 * 1024],
-            [['authorIds'], 'safe'],
+            [['authorIds', '_currentAuthorIds'], 'safe'],
         ];
     }
 
@@ -118,14 +124,36 @@ class Book extends \yii\db\ActiveRecord
      */
     public function saveAuthors()
     {
-        BookAuthor::deleteAll(['book_id' => $this->id]);
-
-        if (!empty($this->authorIds) && is_array($this->authorIds)) {
-            foreach ($this->authorIds as $authorId) {
-                $bookAuthor = new BookAuthor();
-                $bookAuthor->book_id = $this->id;
-                $bookAuthor->author_id = $authorId;
-                $bookAuthor->save();
+        if($this->isNewRecord){
+            if (!empty($this->authorIds) && is_array($this->authorIds)) {
+                foreach ($this->authorIds as $authorId) {
+                    $bookAuthor = new BookAuthor();
+                    $bookAuthor->book_id = $this->id;
+                    $bookAuthor->author_id = $authorId;
+                    $bookAuthor->save();
+                }
+            }
+            return;
+        }
+        if(!$this->isNewRecord){
+            if($this->authorIds === ""){
+                $this->authorIds = [];
+            }
+            $this->_currentAuthorIds = ArrayHelper::map(BookAuthor::find()->andWhere(['book_id' => $this->id])->all(), 'author_id', 'author_id');
+            $authorsDelete = array_diff($this->_currentAuthorIds, $this->authorIds ?? []);
+            $authorsUpdate = array_diff($this->authorIds ?? [], $this->_currentAuthorIds);
+            if($authorsDelete){
+                foreach ($authorsDelete as $item){
+                    BookAuthor::find()->andWhere(['author_id' => $item, 'book_id' => $this->id])->one()->delete();
+                }
+            }
+            if($authorsUpdate){
+                foreach ($authorsUpdate as $item){
+                    $bookAuthor = new BookAuthor();
+                    $bookAuthor->book_id = $this->id;
+                    $bookAuthor->author_id = $item;
+                    $bookAuthor->save();
+                }
             }
         }
     }
